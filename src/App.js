@@ -1,35 +1,59 @@
-import { GoogleMap, useLoadScript } from "@react-google-maps/api";
-import { useMemo } from "react";
-import React from 'react';
-import "./App.css";
+import React, { Component } from 'react';
+import { Loader } from '@googlemaps/js-api-loader';
 
-const App = () => {
+// 
+const loader = new Loader({
+    apiKey: "AIzaSyCNePgsE1No1WzZ_v0_2RQJh3o6CABq1_8",
+    version: "weekly",
+    libraries: ["places", "marker"]
+});
 
-  // useLoadScript: It loads the Google Maps API script.
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_API_KEY,
-  });
+export default class App extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {};
+    }
 
-  // center: Sets a default center of the map
-  const center = useMemo(() => ({ lat: 18.52043, lng: 73.856743 }), []);
+    componentDidMount() {
+        const defaultMapOptions = {
+            center: {
+                lat: 13.779820829768585,
+                lng: 100.54464812602707
+            },
+            zoom: 15,
+        };
 
-  return (
-    <div className="App">
-      {!isLoaded 
-      ? (
-        <h1>Loading...</h1>
-      ) 
-      : (
-        // GoogleMap: It is the main component inside which all the other map components render.
-        <GoogleMap
-          // mapContainerClassName: CSS class name that specifies the height and width of the GoogleMap component
-          mapContainerClassName="map-container"
-          center={center} 
-          zoom={10} // zoom: Sets the initial zoom level of the map
-        />
-      )}
-    </div>
-  );
-};
+        // function load when create page
+        loader.load().then((google) => {
+            const map = new google.maps.Map(
+                this.googleMapDiv,
+                defaultMapOptions);
 
-export default App;
+            const marker = new google.maps.Marker({
+              position: { lat: 13.779820829768585, lng: 100.54464812602707 },
+              map: map, // must have
+            });
+            /*
+                store them in the state so you can use it later
+                E.g. call a function on the map object:
+                    this.state.map.panTo(...)
+                E.g. create a new marker:
+                    new this.state.google.maps.Marker(...)
+            */
+            this.setState({
+                google: google,
+                map: map,
+                marker: marker,
+            });
+        });
+    }
+
+    render() {
+        return (
+            <div
+                ref={(ref) => { this.googleMapDiv = ref }}
+                style={{ height: '100vh', width: '100%' }}>
+            </div>
+        )
+    }
+}
