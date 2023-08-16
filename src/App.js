@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
+import Header from './Header';
 
 // 
 const loader = new Loader({
@@ -15,17 +16,16 @@ export default class App extends Component {
     }
 
     componentDidMount() {
-        const defaultMapOptions = {
-            center: {
-                lat: 13.779820829768585,
-                lng: 100.54464812602707
-            },
-            zoom: 15,
-        };
-
         // function load when create page
         loader.load().then((google) => {
           this.google = google;
+
+          const centerLocation = new google.maps.LatLng(13.779820829768585, 100.54464812602707);
+          
+          const defaultMapOptions = {
+              center: centerLocation,
+              zoom: 15,
+          };
 
           const map = new google.maps.Map(
                 this.googleMapDiv,
@@ -38,10 +38,7 @@ export default class App extends Component {
                     new this.state.google.maps.Marker(...)
             */
             const marker = new google.maps.Marker({
-              position: {
-                lat: 13.779820829768585,
-                lng: 100.54464812602707
-            },
+              position: centerLocation,
               map: map, // must have
             });
 
@@ -54,35 +51,37 @@ export default class App extends Component {
 
             // search restaurant, bakery and cafe in 5 km around center location
             var request = {
-              location: {
-                lat: 13.779820829768585,
-                lng: 100.54464812602707
-            },
-              radius: '5000', // 5 km
-              type: ['restaurant', 'Bakery', 'Cafe']
+              location: centerLocation,
+              radius: 5000, // 5 km
+              type: ['restaurant']
             };
           
-            // A Places Nearby search is initiated with a call to the PlacesService's nearbySearch() method
+            // A Places Nearby search is initiated with a call to the PlacesService's nearbySearch() or PlacesService's textSearch() method
             const service = new google.maps.places.PlacesService(map);
-            service.nearbySearch(request, this.callback);
+            service.textSearch(request, (results, status) => {
+              if (status === 'OK') {
+                for (var i = 0; i < results.length; i++) {
+                  if (!results[i].geometry || !results[i].geometry.location) {
+                    return;
+                  }
+                  console.log(results[i].name);
+                }
+                map.setCenter(centerLocation);
+              }
+            });
         });
-    };
-
-    callback(results, status) {
-      if (status === 'OK') {
-        for (var i = 0; i < results.length; i++) {
-          if (!results[i].geometry || !results[i].geometry.location) return;
-          console.log(results[i].name);
-        }
-      }
-    };
+    }
+    
 
     render() {
         return (
+          <>
+            <Header/>
             <div
                 ref={(ref) => { this.googleMapDiv = ref }}
-                style={{ height: '100vh', width: '100%' }}>
+                style={{ height: '50vh', width: '50vw' }}>
             </div>
-        )
+          </>
+        );
     }
 }
